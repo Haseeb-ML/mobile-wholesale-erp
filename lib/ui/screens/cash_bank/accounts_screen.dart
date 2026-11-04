@@ -60,20 +60,30 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: AppColors.primaryTealLight, borderRadius: BorderRadius.circular(8)),
-                            child: const Icon(Icons.money_rounded, color: AppColors.primaryTeal),
-                          ),
-                          const SizedBox(width: 10),
-                          const Text('Cash in Shop (Counter)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                        ],
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: AppColors.primaryTealLight, borderRadius: BorderRadius.circular(8)),
+                              child: const Icon(Icons.money_rounded, color: AppColors.primaryTeal),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text(
+                                'Cash in Shop',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         dashboard.cashBalance.format(),
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.headingNavy),
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.headingNavy),
                       ),
                     ],
                   ),
@@ -91,26 +101,41 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: AppColors.infoLight, borderRadius: BorderRadius.circular(8)),
-                            child: const Icon(Icons.account_balance_rounded, color: AppColors.info),
-                          ),
-                          const SizedBox(width: 10),
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Meezan Bank Limited', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                              Text('A/C: 0101-0102030405', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-                            ],
-                          ),
-                        ],
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: AppColors.infoLight, borderRadius: BorderRadius.circular(8)),
+                              child: const Icon(Icons.account_balance_rounded, color: AppColors.info),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Meezan Bank Limited',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'A/C: 0101-0102030405',
+                                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         dashboard.bankBalance.format(),
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.headingNavy),
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.headingNavy),
                       ),
                     ],
                   ),
