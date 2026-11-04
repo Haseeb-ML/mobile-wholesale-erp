@@ -14,6 +14,7 @@ import 'package:mobile_wholesale_erp/providers/party_provider.dart';
 import 'package:mobile_wholesale_erp/ui/common/pin_dialog.dart';
 import 'package:mobile_wholesale_erp/ui/common/product_image_widget.dart';
 import 'package:mobile_wholesale_erp/ui/screens/sales/invoice_detail_screen.dart';
+import 'package:mobile_wholesale_erp/ui/screens/sales/invoice_history_screen.dart';
 
 class NewSaleScreen extends StatefulWidget {
   const NewSaleScreen({super.key});
@@ -298,6 +299,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(context.tr('sales_new_invoice')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long_rounded),
+            tooltip: 'Sales Invoices',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const InvoiceHistoryScreen()),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [

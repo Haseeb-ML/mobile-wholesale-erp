@@ -7,6 +7,7 @@ import 'package:mobile_wholesale_erp/ui/screens/cash_bank/accounts_screen.dart';
 import 'package:mobile_wholesale_erp/ui/screens/purchases/purchases_screen.dart';
 import 'package:mobile_wholesale_erp/ui/screens/reports/reports_hub_screen.dart';
 import 'package:mobile_wholesale_erp/ui/screens/returns/returns_screen.dart';
+import 'package:mobile_wholesale_erp/ui/screens/sales/invoice_history_screen.dart';
 import 'package:mobile_wholesale_erp/ui/screens/settings/settings_screen.dart';
 import 'package:mobile_wholesale_erp/ui/screens/settings/staff_roles_screen.dart';
 
@@ -22,6 +23,14 @@ class MoreHubScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
+          _navTile(
+            context,
+            icon: Icons.point_of_sale_rounded,
+            color: AppColors.primaryTeal,
+            title: 'Sales Invoices',
+            subtitle: 'All sales invoices: search, paid / unpaid, reprint, share and cancel',
+            destination: const InvoiceHistoryScreen(),
+          ),
           _navTile(
             context,
             icon: Icons.receipt_long_rounded,

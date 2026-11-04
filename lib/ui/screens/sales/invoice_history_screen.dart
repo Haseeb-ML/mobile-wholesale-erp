@@ -50,6 +50,11 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final filtered = _invoices.where((inv) {
+      if (_filter == 'cancelled') {
+        if (!inv.isCancelled) return false;
+      } else if (inv.isCancelled && _filter != 'all') {
+        return false;
+      }
       if (_filter == 'paid' && inv.paymentStatus != PaymentStatus.paid) return false;
       if (_filter == 'unpaid' && inv.paymentStatus == PaymentStatus.paid) return false;
 
@@ -79,15 +84,20 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
               onChanged: (v) => setState(() => _search = v),
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _filterTab('All Invoices', 'all'),
-              const SizedBox(width: 8),
-              _filterTab('Paid', 'paid'),
-              const SizedBox(width: 8),
-              _filterTab('Unpaid / Credit', 'unpaid'),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _filterTab('All Invoices', 'all'),
+                const SizedBox(width: 8),
+                _filterTab('Paid', 'paid'),
+                const SizedBox(width: 8),
+                _filterTab('Unpaid / Credit', 'unpaid'),
+                const SizedBox(width: 8),
+                _filterTab('Cancelled', 'cancelled'),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Expanded(
