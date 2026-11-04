@@ -75,7 +75,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
-    final products = catalog.products;
+    final products = catalog.allProducts;
 
     final currentQty = _selectedProduct?.currentStockPieces ?? 0;
     final inputQty = int.tryParse(_newQtyCtrl.text.trim()) ?? currentQty;

@@ -327,9 +327,9 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                 Expanded(
                   flex: 3,
                   child: ListView.builder(
-                    itemCount: catalog.products.length,
+                    itemCount: catalog.allProducts.length,
                     itemBuilder: (context, index) {
-                      final p = catalog.products[index];
+                      final p = catalog.allProducts[index];
                       return InkWell(
                         onTap: () => _showAddItemDialog(p),
                         child: Container(

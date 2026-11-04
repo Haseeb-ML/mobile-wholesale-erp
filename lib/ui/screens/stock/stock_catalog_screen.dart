@@ -21,7 +21,7 @@ class StockCatalogScreen extends StatelessWidget {
     final catalog = context.watch<CatalogProvider>();
     final appState = context.watch<AppState>();
     final canViewCost = SecurityService.instance.canViewCostAndProfit(appState.activeRole);
-    final products = catalog.products;
+    final products = catalog.stockProducts;
 
     return Scaffold(
       appBar: AppBar(

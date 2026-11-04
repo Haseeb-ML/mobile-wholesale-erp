@@ -12,7 +12,11 @@ class CatalogProvider extends ChangeNotifier {
   String _stockFilter = 'all'; // 'all', 'low', 'out'
   bool _isGridView = true;
 
-  List<Product> get products {
+  /// All active products without any module-specific filters (Used by Sales, Purchases, Adjustments)
+  List<Product> get allProducts => _products.where((p) => p.isActive).toList();
+
+  /// Products filtered specifically by Stock Catalog filters (Category, Low/Out stock, search)
+  List<Product> get stockProducts {
     return _products.where((p) {
       if (!p.isActive) return false;
 
@@ -38,6 +42,9 @@ class CatalogProvider extends ChangeNotifier {
       return true;
     }).toList();
   }
+
+  /// Default products for stock screen
+  List<Product> get products => stockProducts;
 
   bool get isLoading => _isLoading;
   String get searchQuery => _searchQuery;

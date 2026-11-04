@@ -289,7 +289,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     final catalog = context.watch<CatalogProvider>();
     final parties = context.watch<PartyProvider>();
 
-    final filteredProducts = catalog.products.where((p) {
+    final filteredProducts = catalog.allProducts.where((p) {
       if (_catalogSearch.isEmpty) return true;
       final q = _catalogSearch.toLowerCase();
       return p.name.toLowerCase().contains(q) || p.sku.toLowerCase().contains(q) || (p.compatibleModel?.toLowerCase().contains(q) ?? false);
