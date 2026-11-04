@@ -354,3 +354,4 @@ class AppSchema {
     'CREATE INDEX IF NOT EXISTS idx_acc_trans_date ON account_transactions (date);',
   ];
 }
+

@@ -6,6 +6,8 @@ class AppLocalization {
 
   AppLocalization(this.locale);
 
+  static const LocalizationsDelegate<AppLocalization> delegate = AppLocalizationsDelegate();
+
   static AppLocalization? of(BuildContext context) {
     return Localizations.of<AppLocalization>(context, AppLocalization);
   }
@@ -41,3 +43,4 @@ extension AppLocalizationExtension on BuildContext {
     return AppLocalization.of(this)?.isRtl ?? false;
   }
 }
+

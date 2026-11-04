@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
@@ -11,8 +11,9 @@ class AppStorageService {
   final ImagePicker _picker = ImagePicker();
 
   Future<String> get _photosDirectoryPath async {
+    if (kIsWeb) return 'photos';
     final appDocDir = await getApplicationDocumentsDirectory();
-    final photosDir = Directory(p.join(appDocDir.path, 'photos'));
+    final photosDir = io.Directory(p.join(appDocDir.path, 'photos'));
     if (!photosDir.existsSync()) {
       photosDir.createSync(recursive: true);
     }
@@ -32,12 +33,16 @@ class AppStorageService {
 
       if (pickedFile == null) return null;
 
+      if (kIsWeb) {
+        return 'assets/images/products/charger_20w.png';
+      }
+
       final photosDir = await _photosDirectoryPath;
       final fileName = 'prod_${DateTime.now().millisecondsSinceEpoch}${p.extension(pickedFile.path).isNotEmpty ? p.extension(pickedFile.path) : '.jpg'}';
       final targetPath = p.join(photosDir, fileName);
 
       final bytes = await pickedFile.readAsBytes();
-      final targetFile = File(targetPath);
+      final targetFile = io.File(targetPath);
       await targetFile.writeAsBytes(bytes);
 
       return 'photos/$fileName';
@@ -48,13 +53,14 @@ class AppStorageService {
   }
 
   /// Resolves relative or asset path to a usable File or null
-  Future<File?> resolveLocalFile(String? relativePath) async {
+  Future<io.File?> resolveLocalFile(String? relativePath) async {
+    if (kIsWeb) return null;
     if (relativePath == null || relativePath.isEmpty) return null;
     if (relativePath.startsWith('assets/')) return null; // Handled by AssetImage
 
     final appDocDir = await getApplicationDocumentsDirectory();
     final fullPath = p.join(appDocDir.path, relativePath);
-    final file = File(fullPath);
+    final file = io.File(fullPath);
     if (file.existsSync()) {
       return file;
     }
@@ -63,11 +69,12 @@ class AppStorageService {
 
   /// Deletes a user photo file if it exists
   Future<void> deletePhoto(String? relativePath) async {
+    if (kIsWeb) return;
     if (relativePath == null || relativePath.isEmpty || relativePath.startsWith('assets/')) return;
     try {
       final appDocDir = await getApplicationDocumentsDirectory();
       final fullPath = p.join(appDocDir.path, relativePath);
-      final file = File(fullPath);
+      final file = io.File(fullPath);
       if (file.existsSync()) {
         file.deleteSync();
       }

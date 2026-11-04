@@ -130,3 +130,4 @@ class _TransferDialogState extends State<TransferDialog> {
     );
   }
 }
+

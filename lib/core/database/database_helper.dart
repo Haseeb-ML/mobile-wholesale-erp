@@ -1,8 +1,9 @@
-import 'dart:io';
+import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:mobile_wholesale_erp/core/database/schema.dart';
 
 class DatabaseHelper {
@@ -24,7 +25,11 @@ class DatabaseHelper {
   }
 
   Future<void> _initFfiIfNeeded() async {
-    if (!_ffiInitialized && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    if (_ffiInitialized) return;
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+      _ffiInitialized = true;
+    } else if (io.Platform.isWindows || io.Platform.isLinux || io.Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
       _ffiInitialized = true;
@@ -34,9 +39,12 @@ class DatabaseHelper {
   Future<String> getDatabasePath(bool demo) async {
     await _initFfiIfNeeded();
     final dbName = demo ? 'erp_demo.db' : 'erp_real.db';
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    if (kIsWeb) {
+      return dbName;
+    }
+    if (io.Platform.isWindows || io.Platform.isLinux || io.Platform.isMacOS) {
       final appSupportDir = await getApplicationSupportDirectory();
-      final dir = Directory(p.join(appSupportDir.path, 'databases'));
+      final dir = io.Directory(p.join(appSupportDir.path, 'databases'));
       if (!dir.existsSync()) {
         dir.createSync(recursive: true);
       }
@@ -61,46 +69,60 @@ class DatabaseHelper {
       path,
       version: AppSchema.currentVersion,
       onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON;');
-        await db.execute('PRAGMA journal_mode = WAL;');
+        if (!kIsWeb) {
+          try {
+            await db.execute('PRAGMA foreign_keys = ON;');
+          } catch (e) {
+            debugPrint('PRAGMA foreign_keys warning: $e');
+          }
+        }
       },
       onCreate: (db, version) async {
-        debugPrint('Creating SQLite schema version $version...');
         for (final sql in AppSchema.createTables) {
           await db.execute(sql);
         }
         for (final sql in AppSchema.createIndexes) {
           await db.execute(sql);
         }
-        // Initialize default accounts (Cash in Shop, Bank Account)
+        // Seed initial financial accounts
         await db.insert('financial_accounts', {
           'id': 'cash',
-          'name': 'Cash in Shop (Counter Cash)',
+          'name': 'Cash in Shop',
           'type': 'cash',
           'balance_paisa': 0,
-        });
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
         await db.insert('financial_accounts', {
           'id': 'bank',
-          'name': 'Meezan Bank - Business Account',
+          'name': 'Bank Account (Meezan/HBL)',
           'type': 'bank',
           'balance_paisa': 0,
-          'account_number': '0101-0102030405',
-          'bank_name': 'Meezan Bank Limited',
-        });
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      },
+      onOpen: (db) async {
+        await db.execute('''
+          INSERT OR IGNORE INTO financial_accounts (id, name, type, balance_paisa)
+          VALUES ('cash', 'Cash in Shop', 'cash', 0)
+        ''');
+        await db.execute('''
+          INSERT OR IGNORE INTO financial_accounts (id, name, type, balance_paisa)
+          VALUES ('bank', 'Bank Account (Meezan/HBL)', 'bank', 0)
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        // Migration logic for future schema increments
+        // Migrations
       },
     );
   }
 
-  /// Closes database connection cleanly with WAL checkpoint
+  /// Checkpoint WAL journal before backups
   Future<void> checkpointAndClose() async {
     if (_db != null && _db!.isOpen) {
-      try {
-        await _db!.execute('PRAGMA wal_checkpoint(TRUNCATE);');
-      } catch (e) {
-        debugPrint('WAL checkpoint warning: $e');
+      if (!kIsWeb) {
+        try {
+          await _db!.execute('PRAGMA wal_checkpoint(TRUNCATE);');
+        } catch (e) {
+          debugPrint('WAL checkpoint warning: $e');
+        }
       }
       await _db!.close();
       _db = null;
@@ -110,12 +132,18 @@ class DatabaseHelper {
   /// Reset demo database completely
   Future<void> resetDemoDatabase() async {
     await checkpointAndClose();
+    if (kIsWeb) {
+      await databaseFactory.deleteDatabase('erp_demo.db');
+      _isDemoMode = true;
+      _db = await _initDatabase(true);
+      return;
+    }
     final path = await getDatabasePath(true);
-    final file = File(path);
+    final file = io.File(path);
     if (file.existsSync()) file.deleteSync();
-    final walFile = File('$path-wal');
+    final walFile = io.File('$path-wal');
     if (walFile.existsSync()) walFile.deleteSync();
-    final shmFile = File('$path-shm');
+    final shmFile = io.File('$path-shm');
     if (shmFile.existsSync()) shmFile.deleteSync();
     _isDemoMode = true;
     _db = await _initDatabase(true);

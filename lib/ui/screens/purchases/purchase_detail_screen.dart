@@ -153,3 +153,4 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
     );
   }
 }
+

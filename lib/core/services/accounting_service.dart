@@ -37,6 +37,25 @@ class AccountingService {
 
   DatabaseHelper get _dbHelper => DatabaseHelper.instance;
 
+  Future<int> _ensureAccountBalance(dynamic executor, String accountId, {int delta = 0}) async {
+    final rows = await executor.query('financial_accounts', where: 'id = ?', whereArgs: [accountId]);
+    if (rows.isEmpty) {
+      final name = accountId == 'bank' ? 'Bank Account (Meezan/HBL)' : 'Cash in Shop';
+      await executor.rawInsert(
+        'INSERT OR IGNORE INTO financial_accounts (id, name, type, balance_paisa) VALUES (?, ?, ?, 0)',
+        [accountId, name, accountId],
+      );
+    }
+    if (delta != 0) {
+      await executor.rawUpdate(
+        'UPDATE financial_accounts SET balance_paisa = balance_paisa + ? WHERE id = ?',
+        [delta, accountId],
+      );
+    }
+    final updated = await executor.query('financial_accounts', where: 'id = ?', whereArgs: [accountId]);
+    return updated.isNotEmpty ? ((updated.first['balance_paisa'] as int?) ?? 0) : 0;
+  }
+
   // -------------------------------------------------------------
   // 1. POSTING SALES INVOICES (ATOMIC)
   // -------------------------------------------------------------
@@ -146,13 +165,7 @@ class AccountingService {
       // 7. Update Cash/Bank account if immediate payment received
       if (invoice.paidPaisa > 0) {
         final accountId = invoice.paymentMethod == 'bank' ? 'bank' : 'cash';
-        await txn.rawUpdate(
-          'UPDATE financial_accounts SET balance_paisa = balance_paisa + ? WHERE id = ?',
-          [invoice.paidPaisa, accountId],
-        );
-
-        final accRow = await txn.query('financial_accounts', where: 'id = ?', whereArgs: [accountId]);
-        final currentAccBal = (accRow.first['balance_paisa'] as int?) ?? 0;
+        final currentAccBal = await _ensureAccountBalance(txn, accountId, delta: invoice.paidPaisa);
 
         await txn.insert('account_transactions', {
           'account_id': accountId,
@@ -275,17 +288,13 @@ class AccountingService {
       // 4. Update Cash/Bank if payment was made at purchase time
       if (purchase.paidPaisa > 0) {
         final accountId = purchase.paymentMethod == 'bank' ? 'bank' : 'cash';
-        final accRows = await txn.query('financial_accounts', where: 'id = ?', whereArgs: [accountId]);
-        final currentBal = (accRows.first['balance_paisa'] as int?) ?? 0;
+        final currentBal = await _ensureAccountBalance(txn, accountId);
 
         if (accountId == 'cash' && currentBal < purchase.paidPaisa) {
           throw InsufficientFundsException('Cash in Shop', currentBal, purchase.paidPaisa);
         }
 
-        await txn.rawUpdate(
-          'UPDATE financial_accounts SET balance_paisa = balance_paisa - ? WHERE id = ?',
-          [purchase.paidPaisa, accountId],
-        );
+        final newAccBal = await _ensureAccountBalance(txn, accountId, delta: -purchase.paidPaisa);
 
         await txn.insert('account_transactions', {
           'account_id': accountId,
@@ -295,7 +304,7 @@ class AccountingService {
           'ref_number': purchase.refNumber,
           'debit_paisa': 0,
           'credit_paisa': purchase.paidPaisa,
-          'running_balance_paisa': currentBal - purchase.paidPaisa,
+          'running_balance_paisa': newAccBal,
           'notes': 'Payment for purchase bill ${purchase.refNumber}',
           'created_at': DateTime.now().toIso8601String(),
         });
@@ -321,12 +330,7 @@ class AccountingService {
 
     await db.transaction((txn) async {
       // 1. Debit account
-      await txn.rawUpdate(
-        'UPDATE financial_accounts SET balance_paisa = balance_paisa + ? WHERE id = ?',
-        [amountPaisa, accountType],
-      );
-      final accRows = await txn.query('financial_accounts', where: 'id = ?', whereArgs: [accountType]);
-      final currentAccBal = (accRows.first['balance_paisa'] as int?) ?? 0;
+      final currentAccBal = await _ensureAccountBalance(txn, accountType, delta: amountPaisa);
 
       // 2. Reduce Customer balance
       final partyRows = await txn.query('parties', where: 'id = ?', whereArgs: [customerId]);
@@ -431,18 +435,14 @@ class AccountingService {
 
     await db.transaction((txn) async {
       // 1. Check account balance
-      final accRows = await txn.query('financial_accounts', where: 'id = ?', whereArgs: [accountType]);
-      final currentAccBal = (accRows.first['balance_paisa'] as int?) ?? 0;
+      final currentAccBal = await _ensureAccountBalance(txn, accountType);
 
       if (accountType == 'cash' && currentAccBal < amountPaisa) {
         throw InsufficientFundsException('Cash in Shop', currentAccBal, amountPaisa);
       }
 
       // 2. Credit account
-      await txn.rawUpdate(
-        'UPDATE financial_accounts SET balance_paisa = balance_paisa - ? WHERE id = ?',
-        [amountPaisa, accountType],
-      );
+      final newAccBal = await _ensureAccountBalance(txn, accountType, delta: -amountPaisa);
 
       // 3. Deduct supplier payable
       final partyRows = await txn.query('parties', where: 'id = ?', whereArgs: [supplierId]);
@@ -492,7 +492,7 @@ class AccountingService {
         'ref_number': payNo,
         'debit_paisa': 0,
         'credit_paisa': amountPaisa,
-        'running_balance_paisa': currentAccBal - amountPaisa,
+        'running_balance_paisa': newAccBal,
         'notes': 'Payment to $supplierName ($payNo)',
         'created_at': DateTime.now().toIso8601String(),
       });
@@ -535,17 +535,13 @@ class AccountingService {
     final db = await _dbHelper.database;
 
     await db.transaction((txn) async {
-      final accRows = await txn.query('financial_accounts', where: 'id = ?', whereArgs: [expense.accountId]);
-      final currentAccBal = (accRows.first['balance_paisa'] as int?) ?? 0;
+      final currentAccBal = await _ensureAccountBalance(txn, expense.accountId);
 
       if (expense.accountId == 'cash' && currentAccBal < expense.amountPaisa) {
         throw InsufficientFundsException('Cash in Shop', currentAccBal, expense.amountPaisa);
       }
 
-      await txn.rawUpdate(
-        'UPDATE financial_accounts SET balance_paisa = balance_paisa - ? WHERE id = ?',
-        [expense.amountPaisa, expense.accountId],
-      );
+      final newAccBal = await _ensureAccountBalance(txn, expense.accountId, delta: -expense.amountPaisa);
 
       final expId = await txn.insert('expenses', expense.toMap());
 
@@ -557,7 +553,7 @@ class AccountingService {
         'ref_number': 'EXP-$expId',
         'debit_paisa': 0,
         'credit_paisa': expense.amountPaisa,
-        'running_balance_paisa': currentAccBal - expense.amountPaisa,
+        'running_balance_paisa': newAccBal,
         'notes': '${expense.category}: ${expense.notes ?? ""}',
         'created_at': DateTime.now().toIso8601String(),
       });
@@ -577,24 +573,14 @@ class AccountingService {
     final db = await _dbHelper.database;
 
     await db.transaction((txn) async {
-      final fromAccRows = await txn.query('financial_accounts', where: 'id = ?', whereArgs: [fromAccountId]);
-      final fromBal = (fromAccRows.first['balance_paisa'] as int?) ?? 0;
+      final fromBal = await _ensureAccountBalance(txn, fromAccountId);
 
       if (fromBal < amountPaisa) {
         throw InsufficientFundsException(fromAccountId == 'cash' ? 'Cash' : 'Bank', fromBal, amountPaisa);
       }
 
-      final toAccRows = await txn.query('financial_accounts', where: 'id = ?', whereArgs: [toAccountId]);
-      final toBal = (toAccRows.first['balance_paisa'] as int?) ?? 0;
-
-      await txn.rawUpdate(
-        'UPDATE financial_accounts SET balance_paisa = balance_paisa - ? WHERE id = ?',
-        [amountPaisa, fromAccountId],
-      );
-      await txn.rawUpdate(
-        'UPDATE financial_accounts SET balance_paisa = balance_paisa + ? WHERE id = ?',
-        [amountPaisa, toAccountId],
-      );
+      final newFromBal = await _ensureAccountBalance(txn, fromAccountId, delta: -amountPaisa);
+      final newToBal = await _ensureAccountBalance(txn, toAccountId, delta: amountPaisa);
 
       final transferRef = 'TRF-${DateTime.now().millisecondsSinceEpoch % 1000000}';
 
@@ -606,7 +592,7 @@ class AccountingService {
         'ref_number': transferRef,
         'debit_paisa': 0,
         'credit_paisa': amountPaisa,
-        'running_balance_paisa': fromBal - amountPaisa,
+        'running_balance_paisa': newFromBal,
         'notes': 'Transfer to $toAccountId: ${notes ?? ""}',
         'created_at': DateTime.now().toIso8601String(),
       });
@@ -619,7 +605,7 @@ class AccountingService {
         'ref_number': transferRef,
         'debit_paisa': amountPaisa,
         'credit_paisa': 0,
-        'running_balance_paisa': toBal + amountPaisa,
+        'running_balance_paisa': newToBal,
         'notes': 'Transfer from $fromAccountId: ${notes ?? ""}',
         'created_at': DateTime.now().toIso8601String(),
       });
@@ -757,12 +743,7 @@ class AccountingService {
 
       // If immediate cash refund was paid to customer
       if (returnOrder.refundedCashPaisa > 0) {
-        await txn.rawUpdate(
-          'UPDATE financial_accounts SET balance_paisa = balance_paisa - ? WHERE id = ?',
-          [returnOrder.refundedCashPaisa, 'cash'],
-        );
-        final accRows = await txn.query('financial_accounts', where: 'id = ?', whereArgs: ['cash']);
-        final currentBal = (accRows.first['balance_paisa'] as int?) ?? 0;
+        final currentBal = await _ensureAccountBalance(txn, 'cash', delta: -returnOrder.refundedCashPaisa);
 
         await txn.insert('account_transactions', {
           'account_id': 'cash',
@@ -856,12 +837,7 @@ class AccountingService {
       // 3. Reverse cash/bank if payment was made
       if (invoice.paidPaisa > 0) {
         final accountId = invoice.paymentMethod == 'bank' ? 'bank' : 'cash';
-        await txn.rawUpdate(
-          'UPDATE financial_accounts SET balance_paisa = balance_paisa - ? WHERE id = ?',
-          [invoice.paidPaisa, accountId],
-        );
-        final accRows = await txn.query('financial_accounts', where: 'id = ?', whereArgs: [accountId]);
-        final currentBal = (accRows.first['balance_paisa'] as int?) ?? 0;
+        final currentBal = await _ensureAccountBalance(txn, accountId, delta: -invoice.paidPaisa);
 
         await txn.insert('account_transactions', {
           'account_id': accountId,

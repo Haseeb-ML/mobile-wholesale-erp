@@ -135,3 +135,4 @@ class CatalogProvider extends ChangeNotifier {
     await loadProducts();
   }
 }
+

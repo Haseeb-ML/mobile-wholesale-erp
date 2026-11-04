@@ -22,12 +22,6 @@ void main() async {
   final purchaseProvider = PurchaseProvider();
   final reportProvider = ReportProvider();
 
-  // Initialize offline SQLite database & seed demo if fresh
-  await appState.initialize();
-  await catalogProvider.loadProducts();
-  await partyProvider.loadParties();
-  await dashboardProvider.refresh();
-
   runApp(
     MultiProvider(
       providers: [
@@ -42,6 +36,16 @@ void main() async {
       child: const MobileWholesaleErpApp(),
     ),
   );
+
+  // Initialize offline SQLite database & seed demo in background so UI mounts immediately
+  try {
+    await appState.initialize();
+    await catalogProvider.loadProducts();
+    await partyProvider.loadParties();
+    await dashboardProvider.refresh();
+  } catch (e, stack) {
+    debugPrint('Background initialization notice: $e\n$stack');
+  }
 }
 
 class MobileWholesaleErpApp extends StatelessWidget {
@@ -61,7 +65,7 @@ class MobileWholesaleErpApp extends StatelessWidget {
         Locale('ur', ''),
       ],
       localizationsDelegates: const [
-        AppLocalizationsDelegate(),
+        AppLocalization.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

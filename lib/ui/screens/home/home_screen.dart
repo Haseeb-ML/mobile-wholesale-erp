@@ -223,45 +223,51 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _quickActionButton(
-                context,
-                icon: Icons.add_shopping_cart_rounded,
-                label: context.tr('action_new_sale'),
-                color: AppColors.primaryTeal,
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewSaleScreen())),
-              ),
-              _quickActionButton(
-                context,
-                icon: Icons.receipt_long_rounded,
-                label: context.tr('action_new_purchase'),
-                color: AppColors.info,
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPurchaseScreen())),
-              ),
-              _quickActionButton(
-                context,
-                icon: Icons.call_received_rounded,
-                label: context.tr('action_receive_payment'),
-                color: AppColors.success,
-                onTap: () => PartyPaymentDialog.show(context, isCustomerReceipt: true),
-              ),
-              _quickActionButton(
-                context,
-                icon: Icons.call_made_rounded,
-                label: context.tr('action_pay_supplier'),
-                color: AppColors.warning,
-                onTap: () => PartyPaymentDialog.show(context, isCustomerReceipt: false),
-              ),
-              _quickActionButton(
-                context,
-                icon: Icons.money_off_rounded,
-                label: context.tr('action_add_expense'),
-                color: AppColors.highlightAmberDark,
-                onTap: () => AddExpenseDialog.show(context),
-              ),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _quickActionButton(
+                  context,
+                  icon: Icons.add_shopping_cart_rounded,
+                  label: context.tr('action_new_sale'),
+                  color: AppColors.primaryTeal,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewSaleScreen())),
+                ),
+                const SizedBox(width: 8),
+                _quickActionButton(
+                  context,
+                  icon: Icons.receipt_long_rounded,
+                  label: context.tr('action_new_purchase'),
+                  color: AppColors.info,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewPurchaseScreen())),
+                ),
+                const SizedBox(width: 8),
+                _quickActionButton(
+                  context,
+                  icon: Icons.call_received_rounded,
+                  label: context.tr('action_receive_payment'),
+                  color: AppColors.success,
+                  onTap: () => PartyPaymentDialog.show(context, isCustomerReceipt: true),
+                ),
+                const SizedBox(width: 8),
+                _quickActionButton(
+                  context,
+                  icon: Icons.call_made_rounded,
+                  label: context.tr('action_pay_supplier'),
+                  color: AppColors.warning,
+                  onTap: () => PartyPaymentDialog.show(context, isCustomerReceipt: false),
+                ),
+                const SizedBox(width: 8),
+                _quickActionButton(
+                  context,
+                  icon: Icons.money_off_rounded,
+                  label: context.tr('action_add_expense'),
+                  color: AppColors.highlightAmberDark,
+                  onTap: () => AddExpenseDialog.show(context),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -279,7 +285,7 @@ class HomeScreen extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: SizedBox(
-        width: 62,
+        width: 68,
         child: Column(
           children: [
             Container(
@@ -505,3 +511,4 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+

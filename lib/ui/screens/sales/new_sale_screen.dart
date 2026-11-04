@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_wholesale_erp/core/constants/app_colors.dart';
 import 'package:mobile_wholesale_erp/core/localization/app_localization.dart';
+import 'package:mobile_wholesale_erp/core/services/accounting_service.dart';
 import 'package:mobile_wholesale_erp/models/invoice_item.dart';
 import 'package:mobile_wholesale_erp/models/party.dart';
 import 'package:mobile_wholesale_erp/models/product.dart';
@@ -155,18 +156,42 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       ],
                     ),
                   ),
+                  if (totalPieces > product.currentStockPieces) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.errorLight,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.error),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Out of stock limit! Available: ${product.currentStockPieces} pcs',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.error),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        cart.addOrUpdateProduct(
-                          product: product,
-                          packUnit: selectedUnit,
-                          packQty: packQty,
-                        );
-                        Navigator.pop(ctx);
-                      },
+                      onPressed: totalPieces > product.currentStockPieces
+                          ? null
+                          : () {
+                              cart.addOrUpdateProduct(
+                                product: product,
+                                packUnit: selectedUnit,
+                                packQty: packQty,
+                              );
+                              Navigator.pop(ctx);
+                            },
                       child: const Text('Add to Sales Cart'),
                     ),
                   ),
@@ -239,6 +264,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           MaterialPageRoute(builder: (_) => InvoiceDetailScreen(invoice: invoice)),
         );
       }
+    } on InsufficientStockException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Stock Kam Hai: ${e.name} ke sirf ${e.available} pieces mojood hain (Requested: ${e.requested})'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -307,20 +342,28 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               children: [
                 // Cart Items Section (Flexible)
                 Expanded(
-                  flex: 3,
+                  flex: 5,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                         color: AppColors.backgroundLight,
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('${context.tr("sales_cart")} (${cart.items.length})',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                            Text('${cart.totalPieces} pcs',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryTeal)),
+                            Expanded(
+                              child: Text(
+                                '${context.tr("sales_cart")} (${cart.items.length})',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${cart.totalPieces} pcs',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
+                            ),
                           ],
                         ),
                       ),
@@ -379,7 +422,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
                 // Fast Product Catalog Picker
                 Expanded(
-                  flex: 4,
+                  flex: 5,
                   child: Column(
                     children: [
                       Padding(
@@ -399,8 +442,19 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           itemCount: filteredProducts.length,
                           itemBuilder: (context, index) {
                             final p = filteredProducts[index];
+                            final isOutOfStock = p.currentStockPieces <= 0;
                             return InkWell(
-                              onTap: () => _showAddToCartDialog(p),
+                              onTap: isOutOfStock
+                                  ? () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('${p.name} is currently out of stock (0 pcs).'),
+                                          backgroundColor: AppColors.error,
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    }
+                                  : () => _showAddToCartDialog(p),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                 decoration: const BoxDecoration(
@@ -408,13 +462,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    ProductImageWidget(
-                                      imagePath: p.imagePath,
-                                      category: p.category,
-                                      productName: p.name,
-                                      width: 40,
-                                      height: 40,
-                                      borderRadius: 6,
+                                    Opacity(
+                                      opacity: isOutOfStock ? 0.5 : 1.0,
+                                      child: ProductImageWidget(
+                                        imagePath: p.imagePath,
+                                        category: p.category,
+                                        productName: p.name,
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: 6,
+                                      ),
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(
@@ -422,15 +479,31 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(p.name,
-                                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: isOutOfStock ? AppColors.textMuted : AppColors.headingNavy,
+                                              ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis),
-                                          Text('${p.wholesalePrice.format()} • Stock: ${p.currentStockPieces} pcs',
-                                              style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                          Text(
+                                            isOutOfStock
+                                                ? 'Out of Stock (0 pcs)'
+                                                : '${p.wholesalePrice.format()} • Stock: ${p.currentStockPieces} pcs',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: isOutOfStock ? FontWeight.w600 : FontWeight.normal,
+                                              color: isOutOfStock ? AppColors.error : AppColors.textMuted,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
-                                    const Icon(Icons.add_circle, color: AppColors.primaryTeal, size: 20),
+                                    Icon(
+                                      isOutOfStock ? Icons.block : Icons.add_circle,
+                                      color: isOutOfStock ? AppColors.textMuted : AppColors.primaryTeal,
+                                      size: 20,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -459,20 +532,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Payment Method selector
-                    Row(
-                      children: [
-                        _paymentChip('Cash', 'cash', cart),
-                        const SizedBox(width: 6),
-                        _paymentChip('Bank', 'bank', cart),
-                        const SizedBox(width: 6),
-                        _paymentChip('Credit (Udhar)', 'credit', cart),
-                      ],
-                    ),
+                    const Text('Payment Mode:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('Grand Total', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                        const Text('Grand Total', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
                         Text(
                           cart.grandTotal.format(),
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.primaryTeal),
@@ -480,6 +544,19 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       ],
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _paymentChip('Cash', 'cash', cart),
+                      const SizedBox(width: 8),
+                      _paymentChip('Bank', 'bank', cart),
+                      const SizedBox(width: 8),
+                      _paymentChip('Credit (Udhar)', 'credit', cart),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(

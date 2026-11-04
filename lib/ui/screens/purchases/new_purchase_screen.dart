@@ -369,16 +369,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Payment selector
-                    Row(
-                      children: [
-                        _paymentChip('Credit Bill', 'credit', pur),
-                        const SizedBox(width: 6),
-                        _paymentChip('Cash Paid', 'cash', pur),
-                        const SizedBox(width: 6),
-                        _paymentChip('Bank Paid', 'bank', pur),
-                      ],
-                    ),
+                    const Text('Payment Mode:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -390,6 +381,19 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                       ],
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _paymentChip('Credit Bill', 'credit', pur),
+                      const SizedBox(width: 8),
+                      _paymentChip('Cash Paid', 'cash', pur),
+                      const SizedBox(width: 8),
+                      _paymentChip('Bank Paid', 'bank', pur),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
@@ -429,3 +433,4 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
     );
   }
 }
+

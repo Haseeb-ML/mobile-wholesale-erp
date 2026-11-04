@@ -209,3 +209,4 @@ class _AddEditPartyScreenState extends State<AddEditPartyScreen> {
     );
   }
 }
+

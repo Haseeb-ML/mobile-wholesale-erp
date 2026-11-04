@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:mobile_wholesale_erp/core/database/database_helper.dart';
 import 'package:mobile_wholesale_erp/core/services/accounting_service.dart';
 import 'package:mobile_wholesale_erp/models/expense.dart';
@@ -27,6 +28,12 @@ class SeedService {
 
     debugPrint('Seeding rich offline Demo Data for Mobile Accessories Wholesale...');
 
+    // Clean up any incomplete tables from prior interrupted seed attempts
+    await db.delete('shop_settings');
+    await db.delete('account_transactions');
+    await db.delete('parties');
+    await db.delete('financial_accounts');
+
     final now = DateTime.now();
     String dateOffset(int daysAgo) {
       final d = now.subtract(Duration(days: daysAgo));
@@ -35,11 +42,35 @@ class SeedService {
 
     // 1. Seed Shop Settings
     final settings = ShopSettings.defaultSettings();
-    await db.insert('shop_settings', {'id': 1, ...settings.toMap()});
+    await db.insert(
+      'shop_settings',
+      {'id': 1, ...settings.toMap()},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
 
-    // Opening Cash and Bank balances
-    await db.rawUpdate('UPDATE financial_accounts SET balance_paisa = 15000000 WHERE id = "cash"'); // PKR 150,000 opening cash
-    await db.rawUpdate('UPDATE financial_accounts SET balance_paisa = 50000000 WHERE id = "bank"'); // PKR 500,000 opening bank
+    // Initial Cash and Bank accounts
+    await db.insert(
+      'financial_accounts',
+      {
+        'id': 'cash',
+        'name': 'Cash in Shop (Counter Cash)',
+        'type': 'cash',
+        'balance_paisa': 15000000, // PKR 150,000 opening cash
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    await db.insert(
+      'financial_accounts',
+      {
+        'id': 'bank',
+        'name': 'Meezan Bank - Business Account',
+        'type': 'bank',
+        'balance_paisa': 50000000, // PKR 500,000 opening bank
+        'account_number': '0101-0102030405',
+        'bank_name': 'Meezan Bank Limited',
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
 
     await db.insert('account_transactions', {
       'account_id': 'cash',

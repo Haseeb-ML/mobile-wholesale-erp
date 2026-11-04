@@ -216,3 +216,4 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
     );
   }
 }
+

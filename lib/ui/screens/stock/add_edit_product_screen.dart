@@ -438,3 +438,4 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     );
   }
 }
+

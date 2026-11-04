@@ -180,7 +180,7 @@ class StockCatalogScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.72,
+        childAspectRatio: 0.58,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
@@ -213,7 +213,7 @@ class StockCatalogScreen extends StatelessWidget {
                   category: p.category,
                   productName: p.name,
                   width: double.infinity,
-                  height: 120,
+                  height: 105,
                   borderRadius: 12,
                 ),
                 Positioned(
@@ -223,57 +223,72 @@ class StockCatalogScreen extends StatelessWidget {
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p.name,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.headingNavy),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'SKU: ${p.sku}',
-                    style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
-                  ),
-                  if (p.compatibleModel != null)
-                    Text(
-                      p.compatibleModel!,
-                      style: const TextStyle(fontSize: 10, color: AppColors.textLight),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Wholesale', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
-                          Text(
-                            p.wholesalePrice.format(),
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primaryTeal),
-                          ),
-                        ],
-                      ),
-                      if (canViewCost)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text('Cost', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
-                            Text(
-                              p.costPrice.format(),
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted),
-                            ),
-                          ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.name,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.headingNavy),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(height: 2),
+                        Text(
+                          'SKU: ${p.sku}',
+                          style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (p.compatibleModel != null)
+                          Text(
+                            p.compatibleModel!,
+                            style: const TextStyle(fontSize: 9, color: AppColors.textLight),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Wholesale', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                              Text(
+                                p.wholesalePrice.format(),
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primaryTeal),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (canViewCost)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('Cost', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                              Text(
+                                p.costPrice.format(),
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -320,19 +335,19 @@ class StockCatalogScreen extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 2,
                       children: [
                         Text(
                           'Wholesale: ${p.wholesalePrice.format()}',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primaryTeal),
                         ),
-                        if (canViewCost) ...[
-                          const SizedBox(width: 8),
+                        if (canViewCost)
                           Text(
                             'Cost: ${p.costPrice.format()}',
                             style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                           ),
-                        ],
                       ],
                     ),
                   ],
@@ -373,3 +388,4 @@ class StockCatalogScreen extends StatelessWidget {
     );
   }
 }
+

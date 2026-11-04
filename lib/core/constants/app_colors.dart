@@ -36,3 +36,4 @@ class AppColors {
   static const Color demoBannerText = Color(0xFF92400E);
   static const Color demoBannerBorder = Color(0xFFFDE68A);
 }
+

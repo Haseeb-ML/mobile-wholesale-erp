@@ -122,3 +122,4 @@ class _StockMovementScreenState extends State<StockMovementScreen> {
     );
   }
 }
+

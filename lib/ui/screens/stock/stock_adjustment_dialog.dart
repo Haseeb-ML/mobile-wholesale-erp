@@ -144,3 +144,4 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     );
   }
 }
+

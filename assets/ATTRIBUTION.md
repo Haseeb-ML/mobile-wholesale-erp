@@ -28,3 +28,4 @@ These graphics are authored directly as reproducible offline assets with transpa
 ## 2. Typography & Fonts
 - **Urdu Localization**: Bundled `NotoNastaliqUrdu-Regular.ttf` from the Google Noto Fonts open-source project (SIL Open Font License 1.1).
 - **Western Digits & UI**: Bundled Material Symbols & Icons, compliant with Material 3 design guidelines.
+

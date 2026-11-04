@@ -82,6 +82,8 @@ class StatCard extends StatelessWidget {
                   fontSize: 11,
                   color: AppColors.textLight,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ],
@@ -90,3 +92,4 @@ class StatCard extends StatelessWidget {
     );
   }
 }
+

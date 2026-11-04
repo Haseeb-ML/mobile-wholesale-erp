@@ -12,6 +12,7 @@ import 'package:mobile_wholesale_erp/providers/dashboard_provider.dart';
 import 'package:mobile_wholesale_erp/providers/party_provider.dart';
 import 'package:mobile_wholesale_erp/ui/common/custom_card.dart';
 import 'package:mobile_wholesale_erp/ui/common/pin_dialog.dart';
+import 'package:mobile_wholesale_erp/ui/navigation/main_navigation_screen.dart';
 
 class InvoiceDetailScreen extends StatefulWidget {
   final Invoice invoice;
@@ -33,13 +34,29 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   }
 
   Future<void> _sharePdf() async {
-    final settings = context.read<AppState>().settings;
-    await PdfService.instance.shareInvoicePdf(_currentInvoice, settings);
+    try {
+      final settings = context.read<AppState>().settings;
+      await PdfService.instance.shareInvoicePdf(_currentInvoice, settings);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Share error: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   Future<void> _printInvoice() async {
-    final settings = context.read<AppState>().settings;
-    await PdfService.instance.printInvoice(_currentInvoice, settings);
+    try {
+      final settings = context.read<AppState>().settings;
+      await PdfService.instance.printInvoice(_currentInvoice, settings);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Print error: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   Future<void> _cancelInvoice() async {
@@ -85,26 +102,49 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     }
   }
 
+  void _navigateBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigationScreen(initialIndex: 1)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final inv = _currentInvoice;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(inv.invoiceNumber),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_rounded),
-            tooltip: context.tr('invoice_share_pdf'),
-            onPressed: _sharePdf,
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _navigateBack();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Back / واپس',
+            onPressed: _navigateBack,
           ),
-          IconButton(
-            icon: const Icon(Icons.print_rounded),
-            tooltip: context.tr('invoice_print'),
-            onPressed: _printInvoice,
-          ),
-        ],
-      ),
+          title: Text(inv.invoiceNumber),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.share_rounded),
+              tooltip: context.tr('invoice_share_pdf'),
+              onPressed: _sharePdf,
+            ),
+            IconButton(
+              icon: const Icon(Icons.print_rounded),
+              tooltip: context.tr('invoice_print'),
+              onPressed: _printInvoice,
+            ),
+          ],
+        ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -236,11 +276,21 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                   label: Text(context.tr('invoice_cancel')),
                 ),
               ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: _navigateBack,
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  label: const Text('Back to Sales / نئی سیل پر واپس'),
+                ),
+              ),
             ],
             const SizedBox(height: 32),
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -257,3 +307,4 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 }
+

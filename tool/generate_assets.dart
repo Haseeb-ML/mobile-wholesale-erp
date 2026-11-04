@@ -417,3 +417,4 @@ img.Image generateBrandLogo() {
   img.drawString(im, 'ERP PAKISTAN', font: img.arial14, x: 150, y: 340, color: img.ColorRgba8(245, 158, 11, 255));
   return im;
 }
+

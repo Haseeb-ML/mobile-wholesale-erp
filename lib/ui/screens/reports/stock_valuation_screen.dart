@@ -146,3 +146,4 @@ class _StockValuationScreenState extends State<StockValuationScreen> {
     );
   }
 }
+

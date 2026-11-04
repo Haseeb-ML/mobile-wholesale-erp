@@ -48,6 +48,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           children: _screens,
         ),
         bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           selectedItemColor: AppColors.primaryTeal,
@@ -79,3 +81,4 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
+

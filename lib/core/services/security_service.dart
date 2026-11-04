@@ -48,3 +48,4 @@ class SecurityService {
     return role == 'owner' || role == 'accountant';
   }
 }
+
